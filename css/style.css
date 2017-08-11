@@ -3,19 +3,64 @@
     margin:0;
 }
 
+html{
+    height:100%;
+    background:#333;
+}
+
 li{
     list-style-type: none;
 }
 
+.hide{
+    display:none;
+}
+
+.task-list{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:2;
+}
+.mask{
+    background:#333;
+    opacity:0.4;
+}
+
 .task{
-    padding:0.3rem;
-    border-bottom:1px solid #2973b7;
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    z-index:1;
+    height:1.5rem;
+    padding-left:0.4rem;
+    line-height:1.5rem;
+    border-bottom:1px solid #fff;
     background:#2973b7;
+}
+
+.task-num,.task-name{
+    display:inline-block;
 }
 
 .task-num{
     float:right;
-    display:inline-block;
-    padding:0.3rem 0.5rem;
-    background:#99CCFF;
+    width:1rem;
+    text-align:center;
+    background:#9cf;
+}
+
+.task-create .task{
+    transform-style:preserve-3d;
+    transform-origin:bottom center;
+}
+input[name=task-name]{
+    height:100%;
+    width:8rem;
+    background:transparent;
+    border:none;
+    outline:none;
 }
