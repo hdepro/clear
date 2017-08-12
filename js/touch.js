@@ -20,6 +20,7 @@ Clear.Touch = (function(){
             if(ele.length){
                 let arr = this.toArray(ele);
                 arr.forEach((e,index) => {
+                    if(delay) e.style.transition = `linear all ${delay}ms`;
                     e.style.transform = `translate${axis}(${d*index}px)`;
                 });
             }else{

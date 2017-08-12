@@ -13,15 +13,17 @@ Clear.TaskList = (function(){
             this.Touch = Clear.Touch;
             this.TaskInstances = [];
             let Task = Clear.Task;
-            let domStr = "";
+            //let domStr = "";
+            let domFrag = document.createDocumentFragment();  //使用这种方式好处是真实节点与创建的节点是同一个
             this.Model.data().forEach((task,index) => {
                 let TaskInstance;
                 TaskInstance = new Task(Object.assign({},task,{index}));
                 this.TaskInstances.push(TaskInstance);
                 let dom = TaskInstance.init();
-                domStr += dom.outerHTML;
+                //domStr += dom.outerHTML;
+                domFrag.appendChild(dom);
             });
-            taskListNode.innerHTML = domStr;
+            taskListNode.appendChild(domFrag);  //使用innerHTML方式就只是拷贝html
             this.initTaskInput();
             this.bindTouch();
         },
@@ -34,7 +36,7 @@ Clear.TaskList = (function(){
             </li>`;
         },
         bindTouch(){
-            console.log("touch",this.TASK_HEIGHT);
+            console.log("bind touch",this.TASK_HEIGHT);
             taskListNode.addEventListener("touchstart",this.onTouchStart.bind(this));
             taskListNode.addEventListener("touchmove",this.onTouchMove.bind(this));
             taskListNode.addEventListener("touchend",this.onTouchEnd.bind(this));
@@ -44,12 +46,13 @@ Clear.TaskList = (function(){
             newTask.index = index;
             let Task = Clear.Task;
             let TaskInstance = new Task(newTask);
+            this.TaskInstances.push(TaskInstance);
             TaskInstance.init();
             return TaskInstance;
         },
-        update(){
+        update(delay){
             this.Touch.moveY(taskListNode,0);
-            this.Touch.moveY(taskListNode.children,this.TASK_HEIGHT);
+            this.Touch.moveY(taskListNode.children,this.TASK_HEIGHT,delay);
         },
         onTouchStart(e){
             let touch = e.touches[0];
@@ -66,13 +69,15 @@ Clear.TaskList = (function(){
             let id = +this.touchEle.dataset.id;   //此处注意转为数字
             console.log(this.TaskInstances,id);
             this.touchInstance = this.TaskInstances.find(t => t.task.id === id);
+            this.disabledTouch = false;
         },
         onTouchMove(e){
+            if(this.disabledTouch){return ;}
             let touch = e.touches[0];
             this.moveX = touch.clientX;
             this.moveY = touch.clientY;
-            let ds_x = this.moveX - this.startX;
-            let ds_y = this.moveY - this.startY;
+            let ds_x = (this.moveX - this.startX)*Clear.Config.SLIDING_VELOCITY;
+            let ds_y = (this.moveY - this.startY)*Clear.Config.SLIDING_VELOCITY;
             if(!this.direction){
                 if(Math.abs(ds_y) > Math.abs(ds_x)){
                     this.direction = "top-bottom";
@@ -91,19 +96,27 @@ Clear.TaskList = (function(){
             }else{
                 this.Touch.moveX(this.touchEle,ds_x);
                 if(ds_x >= this.TASK_HEIGHT){
+                    this.disabledTouch = true;
                     this.touchInstance.finish();
                 }else if(ds_x <= -this.TASK_HEIGHT){
-                    console.log(this.TaskInstances,this.touchInstance);
+                    this.disabledTouch = true;
+                    //console.log(this.TaskInstances,this.touchInstance);
                     this.touchInstance.del();
-                    taskListNode.removeChild(this.touchEle.parentNode);
-                    this.update();
+                    let temp = this.touchEle.parentNode;  //缓存下需要删除的节点
+                    //console.log("temp : ",temp);
+                    setTimeout(() => {
+                        //console.log("setTimeout temp : ",temp);
+                        taskListNode.removeChild(temp);
+                        this.update(Clear.Config.TASK_CLEAR_DELAY);
+                    },Clear.Config.TASK_CLEAR_DELAY);
                 }
             }
         },
         onTouchEnd(e){
-            let ds_x = this.moveX - this.startX;
-            let ds_y = this.moveY - this.startY;
-            console.log(this.startX,this.moveX,this.startY,this.moveY,ds_x,ds_y);
+            if(this.disabledTouch){return ;}
+            let ds_x = (this.moveX - this.startX)*Clear.Config.SLIDING_VELOCITY;
+            let ds_y = (this.moveY - this.startY)*Clear.Config.SLIDING_VELOCITY;
+            console.log(this.startX,this.moveX,this.startY,this.moveY,ds_x,ds_y,this.direction);
             if(this.direction === "top-bottom"){
                 if(!Number.isNaN(ds_y) && ds_y){
                     if(ds_y >= this.TASK_HEIGHT){
@@ -137,7 +150,7 @@ Clear.TaskList = (function(){
                         setTimeout(() => {
                             this.Touch.moveY(taskListNode,0,Clear.Config.TASK_CLEAR_DELAY);
                         },Clear.Config.TASK_CLEAR_DELAY);
-                    },0);
+                    },0); //等插入后立即执行不会有transition的效果，因为浏览器还没有渲染，必须加一个时钟周期的延迟
                 }
             }
         }

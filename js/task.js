@@ -20,7 +20,7 @@ Clear.Task.prototype = {
                <img src="img/del.png" class="task-del"/>
                <img src="img/finish.png" class="task-finish"/>
             </div>`;
-        console.log(ele,ele.offsetHeight);
+        //console.log(ele,ele.offsetHeight);
         ele.style.transform = `translate3d(0,${(task.index)*1.5}rem,0)`;
         this.ele = ele;
         return ele;
@@ -28,7 +28,7 @@ Clear.Task.prototype = {
     finish(){
         console.log("finish task name = ",this.task.name);
         Clear.Model.finishTask(this.task.id);
-        Clear.Touch.moveX(this.ele,10*Clear.rem,Clear.Config.TASK_CLEAR_DELAY);
+        Clear.Touch.moveX(this.ele.firstChild,0,Clear.Config.TASK_CLEAR_DELAY);  //将任务复原位置
         console.log(this.ele.firstChild);
         this.ele.firstChild.classList.add(finishClass);
     },
@@ -36,6 +36,7 @@ Clear.Task.prototype = {
 
     },
     del(){
+        //console.log("del : ",this.ele);
         Clear.Model.delTask(this.task.id);
         Clear.Touch.moveX(this.ele,-10*Clear.rem,Clear.Config.TASK_CLEAR_DELAY);
     }
