@@ -40,6 +40,10 @@ li{
     line-height:1.5rem;
     border-bottom:1px solid #fff;
     background:#2973b7;
+    color:#fff;
+}
+.task.finish{
+    color:#ccc;
 }
 
 .task-num,.task-name{
@@ -51,6 +55,23 @@ li{
     width:1rem;
     text-align:center;
     background:#9cf;
+}
+
+.info{
+    position:absolute;
+    width:100%;
+    padding:0.25rem;
+}
+.task-finish,.task-del{
+    position:absolute;
+    height:1rem;
+    z-index:-1;
+}
+.task-finish{
+    left:0.3rem;
+}
+.task-del{
+    right:0.3rem;
 }
 
 .task-create .task{

@@ -9,6 +9,7 @@ Clear.Model = (function(){
                 {
                     id:1,
                     name:"heben1",
+                    state:0,
                     items:[
                         {id:1,name:"heben item 1",state:0},
                         {id:2,name:"heben item 2",state:0},
@@ -20,15 +21,16 @@ Clear.Model = (function(){
                 {
                     id:2,
                     name:"heben2",
+                    state:0,
                     items:[
                         {id:1,name:"heben item 1",state:0},
                         {id:2,name:"heben item 1",state:1},
                         {id:3,name:"heben item 1",state:0}
                     ]
                 },
-                {id:3,name:"heben3",items:[{id:1,name:"heben3 item 1",state:0}]},
-                {id:4,name:"heben4",items:[{id:1,name:"heben4 item 1",state:0}]},
-                {id:5,name:"heben5",items:[{id:1,name:"heben5 item 1",state:0}]},
+                {id:3,name:"heben3",state:1,items:[{id:1,name:"heben3 item 1",state:0}]},
+                {id:4,name:"heben4",state:1,items:[{id:1,name:"heben4 item 1",state:0}]},
+                {id:5,name:"heben5",state:1,items:[{id:1,name:"heben5 item 1",state:0}]},
             ];
 
             this.task_list = localStorage.getItem("task_list");
@@ -45,20 +47,56 @@ Clear.Model = (function(){
         updateLocalStorage(){
             localStorage.setItem("task_list",JSON.stringify(this.task_list));
         },
-        generateId(){
+        generateTaskId(){
             let lastIndex = this.task_list.length - 1;
             console.log(lastIndex,this.task_list[lastIndex]);
             return this.task_list[lastIndex].id+1;
         },
-        create(name){
-            let data = {id:this.generateId(),name,items:[]};
+        createTask(name){
+            let data = {id:this.generateTaskId(),name,state:0,items:[]};
             this.task_list.push(data);
             this.updateLocalStorage();
             return Object.assign({},data);
         },
-        del(id){
+        delTask(id){
             let index = this.task_list.findIndex(t => t.id === id);
             this.task_list.splice(index,1);
+            this.updateLocalStorage();
+        },
+        finishTask(id){
+            let task = this.task_list.find(t => t.id === id);
+            task.items.forEach(item => {
+                this.finishItem(id,item.id);
+            });
+            task.state = 1;
+            this.updateLocalStorage();
+        },
+        getTaskItems(taskId){
+            let task = this.task_list.find(t => t.id === taskId);
+            return task.items;
+        },
+        generateItemId(taskId){
+            let items = this.getTaskItems(taskId);
+            let lastIndex = items.length - 1;
+            return items[lastIndex].id+1;
+        },
+        createItem(taskId,name){
+            let data = {id:this.generateItemId(taskId),name,state:0};
+            let items = this.getTaskItems(taskId);
+            items.push(data);
+            this.updateLocalStorage();
+            return Object.assign({},data);
+        },
+        delItem(taskId,itemId){
+            let items = this.getTaskItems(taskId);
+            let index = items.findIndex(i => i.id === itemId);
+            items.splice(index,1);
+            this.updateLocalStorage();
+        },
+        finishItem(taskId,itemId){
+            let items = this.getTaskItems(taskId);
+            let item = items.find(i => i.id === itemId);
+            item.state = 1;
             this.updateLocalStorage();
         }
     }

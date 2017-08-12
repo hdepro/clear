@@ -19,12 +19,13 @@ Clear.Touch = (function(){
         _move(ele,d,axis,delay){
             if(ele.length){
                 let arr = this.toArray(ele);
-                arr.forEach(e => {
-                    e.style.transform = `translate${axis}(${d}px)`;
+                arr.forEach((e,index) => {
+                    e.style.transform = `translate${axis}(${d*index}px)`;
                 });
             }else{
+                if(delay) ele.style.transition = `linear all ${delay}ms`;
                 ele.style.transform = `translate${axis}(${d}px)`;
-                if(delay) ele.style.transition = `all linear ${delay}ms`;
+                //console.log("_move transition");
             }
         }
     }

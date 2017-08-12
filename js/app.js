@@ -7,9 +7,10 @@ let Clear = {
         let rootSize = document.body.getBoundingClientRect().width;
         document.documentElement.style.fontSize = rootSize/10 + "px";
         document.body.style.fontSize = rootSize/30 + "px";
-        Clear.Model.init();
-        Clear.TaskList.init();
         Clear.rem = rootSize/10;
+        Clear.Model.init();
+        Clear.Config.init();
+        Clear.TaskList.init();
     }
 };
 
