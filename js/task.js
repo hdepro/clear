@@ -28,7 +28,7 @@ Clear.Task.prototype = {
     finish(){
         console.log("finish task name = ",this.task.name);
         Clear.Model.finishTask(this.task.id);
-        Clear.Touch.moveX(this.ele.firstChild,0,Clear.Config.TASK_CLEAR_DELAY);  //将任务复原位置
+        //Clear.Touch.moveX(this.ele.firstChild,0,Clear.Config.TASK_CLEAR_DELAY);  //将任务复原位置
         console.log(this.ele.firstChild);
         this.ele.firstChild.classList.add(finishClass);
     },

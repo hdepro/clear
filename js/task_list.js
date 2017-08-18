@@ -6,6 +6,7 @@ Clear.TaskList = (function(){
     let content = document.querySelector(".content");
     let taskListNode = content.querySelector(".task-list");
     let taskCreateNode = content.querySelector(".task-create");
+    let maskNode = content.querySelector(".mask");
     return {
         init(){
             this.TASK_HEIGHT = Number;
@@ -40,7 +41,7 @@ Clear.TaskList = (function(){
             taskListNode.addEventListener("touchstart",this.onTouchStart.bind(this));
             taskListNode.addEventListener("touchmove",this.onTouchMove.bind(this));
             taskListNode.addEventListener("touchend",this.onTouchEnd.bind(this));
-            taskListNode.addEventListener("click",this.handleClick.bind(this));
+            maskNode.addEventListener("click",this.handleClick.bind(this));
         },
         createTask(newTask,index){
             newTask.index = index;
@@ -87,7 +88,6 @@ Clear.TaskList = (function(){
             }
             console.log(this.startX,this.moveX,this.startY,this.moveY);
             if(this.direction === "top-bottom"){
-                taskCreateNode.classList.remove("hide");
                 this.Touch.moveY(taskListNode,ds_y);
                 this.Touch.moveY(taskCreateNode,ds_y-this.TASK_HEIGHT);
                 let childNode = taskCreateNode.querySelector(".task");
@@ -95,6 +95,25 @@ Clear.TaskList = (function(){
                 childNode.style.transform = `rotateX(${deg}deg)`;
             }else{
                 this.Touch.moveX(this.touchEle,ds_x);
+            }
+        },
+        onTouchEnd(e){
+            if(this.disabledTouch){return ;}
+            let ds_x = (this.moveX - this.startX)*Clear.Config.SLIDING_VELOCITY;
+            let ds_y = (this.moveY - this.startY)*Clear.Config.SLIDING_VELOCITY;
+            console.log(this.startX,this.moveX,this.startY,this.moveY,ds_x,ds_y,this.direction);
+            if(this.direction === "top-bottom"){
+                if(!Number.isNaN(ds_y) && ds_y){
+                    if(ds_y >= this.TASK_HEIGHT){
+                        this.Touch.moveY(taskListNode,this.TASK_HEIGHT);
+                        maskNode.classList.remove("hide");
+                        this.Touch.moveY(taskCreateNode,0);
+                    }else{
+                        this.Touch.moveY(taskListNode,0);
+                        this.Touch.moveY(taskCreateNode,-this.TASK_HEIGHT);
+                    }
+                }
+            }else{
                 if(ds_x >= this.TASK_HEIGHT){
                     this.disabledTouch = true;
                     this.touchInstance.finish();
@@ -110,48 +129,27 @@ Clear.TaskList = (function(){
                         this.update(Clear.Config.TASK_CLEAR_DELAY);
                     },Clear.Config.TASK_CLEAR_DELAY);
                 }
-            }
-        },
-        onTouchEnd(e){
-            if(this.disabledTouch){return ;}
-            let ds_x = (this.moveX - this.startX)*Clear.Config.SLIDING_VELOCITY;
-            let ds_y = (this.moveY - this.startY)*Clear.Config.SLIDING_VELOCITY;
-            console.log(this.startX,this.moveX,this.startY,this.moveY,ds_x,ds_y,this.direction);
-            if(this.direction === "top-bottom"){
-                if(!Number.isNaN(ds_y) && ds_y){
-                    if(ds_y >= this.TASK_HEIGHT){
-                        this.Touch.moveY(taskListNode,this.TASK_HEIGHT);
-                        taskListNode.classList.add("mask");
-                        this.Touch.moveY(taskCreateNode,0);
-                    }else{
-                        this.Touch.moveY(taskListNode,0);
-                        this.Touch.moveY(taskCreateNode,-this.TASK_HEIGHT);
-                    }
-                }
-            }else{
                 this.Touch.moveX(this.touchEle,0);
             }
         },
-        handleClick(e){       //点击也会触发touchend
+        handleClick(e){       //点击也会触发touchend,handleClick最后被触发
             //console.log("handleclick");
-            if(taskListNode.classList.contains("mask")){
-                let value = document.querySelector("[name=task-name]").value;
-                taskListNode.classList.remove("mask");
-                let newTask = this.Model.createTask(value);
-                let taskInstance = this.createTask(newTask,0);
-                this.Touch.moveY(taskCreateNode,-this.TASK_HEIGHT);
-                if(value){
-                    taskListNode.insertBefore(taskInstance.ele,taskListNode.firstElementChild);
-                    this.update();
-                }else{
-                    content.insertBefore(taskInstance.ele,content.firstElementChild);
+            let value = document.querySelector("[name=task-name]").value;
+            maskNode.classList.add("hide");
+            let newTask = this.Model.createTask(value);
+            let taskInstance = this.createTask(newTask,0);
+            this.Touch.moveY(taskCreateNode,-this.TASK_HEIGHT);
+            if(value){
+                taskListNode.insertBefore(taskInstance.ele,taskListNode.firstElementChild);
+                this.update();
+            }else{
+                content.insertBefore(taskInstance.ele,content.firstElementChild);
+                setTimeout(() => {
+                    taskInstance.del();
                     setTimeout(() => {
-                        taskInstance.del();
-                        setTimeout(() => {
-                            this.Touch.moveY(taskListNode,0,Clear.Config.TASK_CLEAR_DELAY);
-                        },Clear.Config.TASK_CLEAR_DELAY);
-                    },0); //等插入后立即执行不会有transition的效果，因为浏览器还没有渲染，必须加一个时钟周期的延迟
-                }
+                        this.Touch.moveY(taskListNode,0,Clear.Config.TASK_CLEAR_DELAY);
+                    },Clear.Config.TASK_CLEAR_DELAY);
+                },0); //等插入后立即执行不会有transition的效果，因为浏览器还没有渲染，必须加一个时钟周期的延迟
             }
         }
     }

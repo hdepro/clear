@@ -5,7 +5,7 @@
 let fs = require("fs");
 let babel = require("babel-core");
 
-babel.transformFile("js/index.js", {
+babel.transformFile("js/app.js", {
     presets: ['es2015','stage-0']
 }, function (err, result) {
     if(err) {
