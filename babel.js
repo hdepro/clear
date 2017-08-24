@@ -15,6 +15,19 @@ babel.transformFile("js/app.js", {
     fs.writeFileSync("build/index.js", result.code);
 });
 
+let browserSync = require('browser-sync');
+let files = [
+    '*.html',
+    'js/*.js',
+    'build/*.js',
+    'css/*.css'
+];
+browserSync.init(files, {
+    proxy: 'http://localhost:80',
+    browser: 'chrome',
+    notify: false,
+    port: 3000
+});
 
 let http = require("http");
 let url = require("url");
@@ -34,7 +47,7 @@ const server = http.createServer((request,response)=>{
             console.log(exist);
             if(exist){
                 fs.readFile(pathname,(err,data)=>{
-                    setTimeout(function(){response.end(data)},5000);
+                    response.end(data);
                 });
             }else{
                 response.writeHead(404,'file is not exist',{"Content-Type":'text/html'});
