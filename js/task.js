@@ -15,7 +15,7 @@ Clear.Task.prototype = {
         //此处再套一层div是为了在删除的时候移动该div
         ele.innerHTML = `<div class="inner">     
             <li class="task ${task.state?finishClass:''}" data-id="${task.id}">
-                  <span class="task-name">${task.name}</span>
+                  <input class="task-name" name="task-name" value="${task.name}"/>
                   <span class="task-num">${task.items.length}</span>
             </li>
             <div class="info">
@@ -36,6 +36,9 @@ Clear.Task.prototype = {
     },
     create(){
 
+    },
+    edit(name){
+        Clear.Model.editTask(this.task.id,name);
     },
     del(){
         //console.log("del : ",this.ele);

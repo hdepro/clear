@@ -41,7 +41,8 @@ Clear.TaskList = (function(){
             taskListNode.addEventListener("touchstart",this.onTouchStart.bind(this));
             taskListNode.addEventListener("touchmove",this.onTouchMove.bind(this));
             taskListNode.addEventListener("touchend",this.onTouchEnd.bind(this));
-            taskListNode.addEventListener("click",this.handleClick.bind(this));
+            taskListNode.addEventListener("click",this.handleTaskClick.bind(this));
+            maskNode.addEventListener("click",this.handleMaskClick.bind(this));
         },
         createTask(newTask,index){
             newTask.index = index;
@@ -68,16 +69,48 @@ Clear.TaskList = (function(){
             }
             let id = +this.touchEle.dataset.id;   //此处注意转为数字
             console.log(this.TaskInstances,id);
-            this.touchInstance = this.TaskInstances.find(t => t.task.id === id);
+            this.index = this.TaskInstances.findIndex(t => t.task.id === id);
+            this.touchInstance = this.TaskInstances[this.index];
             this.disabledTouch = false;
+            this.drag = false;
+            this.timer = setTimeout(() => {
+                this.drag = true;
+                this.touchInstance.ele.classList.add("high-index");
+            },1000);
         },
         onTouchMove(e){
+            e.preventDefault();   //阻止滚动的发生
             if(this.disabledTouch){return ;}
+            clearTimeout(this.timer);
             let touch = e.touches[0];
-            this.moveX = touch.clientX;
             this.moveY = touch.clientY;
+            let ds_y = this.moveY - this.startY;
+            if(this.drag){
+                console.log("drag index = ",this.index);
+                this.Touch.moveY(this.touchInstance.inner,ds_y);
+                let plus_minus = Math.abs(ds_y)/ds_y;
+                let newIndex = parseInt(ds_y/this.TASK_HEIGHT)+this.index+plus_minus;
+                let judge = Math.abs(ds_y)%this.TASK_HEIGHT - this.TASK_HEIGHT/2;
+                if(judge > 0){
+                    let start = this.index+1,end = newIndex;
+                    if(plus_minus === -1){
+                        start = newIndex;
+                        end = this.index-1;
+                    }
+                    console.log("drag newIndex = ",newIndex,plus_minus,start,end);
+                    for(let i=0;i<this.TaskInstances.length;i++){
+                        if(i>=start && i<=end){
+                            this.Touch.moveY(this.TaskInstances[i].inner,-plus_minus*this.TASK_HEIGHT);
+                        }else if(i!==this.index){
+                            this.Touch.moveY(this.TaskInstances[i].inner,0);
+                        }
+                    }
+                }
+                return;
+            }
+            this.moveX = touch.clientX;
             let ds_x = (this.moveX - this.startX)*Clear.Config.SLIDING_VELOCITY;
-            let ds_y = (this.moveY - this.startY)*Clear.Config.SLIDING_VELOCITY;
+            ds_y *= Clear.Config.SLIDING_VELOCITY;
             if(!this.direction){
                 if(Math.abs(ds_y) > Math.abs(ds_x)){
                     this.direction = "top-bottom";
@@ -89,7 +122,8 @@ Clear.TaskList = (function(){
             if(this.direction === "top-bottom"){
                 this.Touch.moveY(content,ds_y);
                 let childNode = taskCreateNode.querySelector(".task");
-                let deg = Math.acos(ds_y/this.TASK_HEIGHT)/Math.PI*180+10;
+                if(ds_y < 0){return;}
+                let deg = Math.acos(ds_y/this.TASK_HEIGHT)*2/Math.PI*105;
                 childNode.style.transform = `rotateX(${deg}deg)`;
             }else{
                 this.Touch.moveX(this.touchEle,ds_x);
@@ -97,6 +131,10 @@ Clear.TaskList = (function(){
         },
         onTouchEnd(e){
             if(this.disabledTouch){return ;}
+            clearTimeout(this.timer);    //放置点击事件触发drag
+            if(this.drag){
+                this.touchInstance.ele.classList.remove("high-index");
+            }
             let ds_x = (this.moveX - this.startX)*Clear.Config.SLIDING_VELOCITY;
             let ds_y = (this.moveY - this.startY)*Clear.Config.SLIDING_VELOCITY;
             console.log(this.startX,this.moveX,this.startY,this.moveY,ds_x,ds_y,this.direction);
@@ -104,8 +142,9 @@ Clear.TaskList = (function(){
                 if(!Number.isNaN(ds_y) && ds_y){
                     if(ds_y >= this.TASK_HEIGHT){
                         this.Touch.moveY(content,this.TASK_HEIGHT);
-                        taskListNode.classList.add("mask");
-                        //maskNode.classList.remove("hide");
+                        //taskListNode.classList.add("mask");
+                        maskNode.classList.remove("hide");
+                        maskNode.style.height = window.innerHeight - this.TASK_HEIGHT+"px";
                     }else{
                         this.Touch.moveY(content,0);
                     }
@@ -129,19 +168,38 @@ Clear.TaskList = (function(){
                 this.Touch.moveX(this.touchEle,0);
             }
         },
-        handleClick(e){       //点击也会触发touchend,handleClick最后被触发
-            //console.log("handleclick");
-            if(taskListNode.classList.contains("mask")){
-                let value = document.querySelector("[name=task-name]").value;
-                taskListNode.classList.remove("mask");
-                //maskNode.classList.add("hide");
+        handleTaskClick(e){
+            console.log("handleTaskClick",e.clientY,e.pageY,e.screenY);
+            maskNode.classList.remove("hide");
+            maskNode.style.height = window.innerHeight+"px";
+            this.touchInstance.ele.classList.add("high-index");
+        },
+        handleMaskClick(e){       //点击也会触发touchend,handleClick最后被触发
+            console.log("handleMaskClick",e.clientY,e.pageY,e.screenY);
+            //taskListNode.classList.remove("mask");
+            maskNode.classList.add("hide");
+            if(this.touchInstance.ele.classList.contains("high-index")){
+                this.touchInstance.ele.classList.remove("high-index");
+                let value = this.touchInstance.ele.querySelector("input").value;
+                if(value){
+                    this.touchInstance.edit(value);
+                }else{
+                    this.touchInstance.del();
+                    setTimeout(() => {
+                        taskListNode.removeChild(this.touchInstance.ele);
+                        this.update(Clear.Config.TASK_CLEAR_DELAY);
+                    },Clear.Config.TASK_CLEAR_DELAY);
+                }
+            }else{
+                let inputNode = taskCreateNode.querySelector("[name=task-name]");
+                let value = inputNode.value;
                 let newTask = this.Model.createTask(value);
                 let taskInstance = this.createTask(newTask,0);
                 taskListNode.insertBefore(taskInstance.ele,taskListNode.firstElementChild);
                 //console.log("taskListNode.children.length = "+taskListNode.children.length);
                 this.update();
                 this.Touch.moveY(content,0);
-                  //复原位置
+                //复原位置
                 if(!value){
                     requestAnimationFrame(() => {
                         taskInstance.del();
@@ -152,6 +210,7 @@ Clear.TaskList = (function(){
                     });
                     //等插入后立即执行不会有transition的效果，因为浏览器还没有渲染，必须加一个时钟周期的延迟
                 }
+                inputNode.value = "";
             }
         }
     }

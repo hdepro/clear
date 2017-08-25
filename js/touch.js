@@ -33,6 +33,7 @@ Clear.Touch = (function(){
             z = position.z || z;
             if(ele.length){
                 let arr = this.toArray(ele);
+                console.log(arr);
                 arr.forEach((e,index) => {
                     delay = delay || 0;
                     e.style.transition = `linear all ${delay}ms`;

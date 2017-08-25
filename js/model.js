@@ -71,6 +71,11 @@ Clear.Model = (function(){
             task.state = 1;
             this.updateLocalStorage();
         },
+        editTask(id,name){
+            let task = this.task_list.find(t => t.id === id);
+            task.name = name;
+            this.updateLocalStorage();
+        },
         getTaskItems(taskId){
             let task = this.task_list.find(t => t.id === taskId);
             return task.items;

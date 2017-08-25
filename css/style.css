@@ -13,7 +13,7 @@ li{
 }
 
 .hide{
-    display:none;
+    display:none !important;
 }
 
 .task-list{
@@ -50,12 +50,12 @@ li{
     height:1.5rem;
     padding-left:0.4rem;
     line-height:1.5rem;
-    border-bottom:1px solid #fff;
+    /*border-bottom:1px solid #fff;*/
     background:#8048e1;
     color:#fff;
 }
 .task.finish{
-    color:#ccc;
+    color:#aaa;
 }
 
 .task-num,.task-name{
@@ -86,7 +86,7 @@ li{
     right:0.3rem;
 }
 
-.task-create{
+.high-index{
     position:relative;
     z-index:2;
 }
@@ -97,11 +97,15 @@ li{
 input[name=task-name]{
     height:100%;
     width:8rem;
-    background:transparent;
     border:none;
     outline:none;
+    color:#fff;
+    background:transparent;
+}
+.finish input[name=task-name]{
+    color:#aaa;
 }
 
-.high-index{
-    z-index:2;   //处于最上层
+input::-webkit-input-placeholder{
+    color:#fff;
 }
