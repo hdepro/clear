@@ -39,22 +39,21 @@ Clear.Model = (function(){
             }else{
                 this.task_list = default_task_list;
             }
+            this.taskId = Math.max.apply(this,this.task_list.map(t => t.id));
         },
         data(){
             let temp = [...this.task_list];
-            return temp.reverse();
+            return temp;
         },
         updateLocalStorage(){
             localStorage.setItem("task_list",JSON.stringify(this.task_list));
         },
         generateTaskId(){
-            let lastIndex = this.task_list.length - 1;
-            console.log(lastIndex,this.task_list[lastIndex]);
-            return this.task_list[lastIndex].id+1;
+            return ++this.taskId;
         },
         createTask(name){
             let data = {id:this.generateTaskId(),name,state:0,items:[]};
-            this.task_list.push(data);
+            this.task_list.unshift(data);
             this.updateLocalStorage();
             return Object.assign({},data);
         },
@@ -76,11 +75,19 @@ Clear.Model = (function(){
             task.name = name;
             this.updateLocalStorage();
         },
+        changeTaskSort(index,newIndex){
+            console.log("changeTaskSort",index,newIndex);
+            let tmp = this.task_list[index];
+            this.task_list.splice(index,1);
+            this.task_list.splice(newIndex,0,tmp);
+            this.updateLocalStorage();
+        },
         getTaskItems(taskId){
             let task = this.task_list.find(t => t.id === taskId);
             return task.items;
         },
         generateItemId(taskId){
+            //需要修改
             let items = this.getTaskItems(taskId);
             let lastIndex = items.length - 1;
             return items[lastIndex].id+1;
@@ -88,7 +95,7 @@ Clear.Model = (function(){
         createItem(taskId,name){
             let data = {id:this.generateItemId(taskId),name,state:0};
             let items = this.getTaskItems(taskId);
-            items.push(data);
+            items.unshift(data);
             this.updateLocalStorage();
             return Object.assign({},data);
         },

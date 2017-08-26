@@ -13,6 +13,7 @@ Clear.Task.prototype = {
         let task = this.task;
         let ele = document.createElement("div");
         //此处再套一层div是为了在删除的时候移动该div
+        console.log(task);
         ele.innerHTML = `<div class="inner">     
             <li class="task ${task.state?finishClass:''}" data-id="${task.id}">
                   <input class="task-name" name="task-name" value="${task.name}"/>
@@ -31,8 +32,8 @@ Clear.Task.prototype = {
     finish(){
         console.log("finish task name = ",this.task.name);
         Clear.Model.finishTask(this.task.id);
-        console.log(this.ele.firstChild);
-        this.ele.firstChild.classList.add(finishClass);
+        console.log(this.inner.firstChild);
+        this.inner.firstChild.classList.add(finishClass);
     },
     create(){
 

@@ -48,12 +48,18 @@ Clear.TaskList = (function(){
             newTask.index = index;
             let Task = Clear.Task;
             let TaskInstance = new Task(newTask);
-            this.TaskInstances.push(TaskInstance);
+            this.TaskInstances.unshift(TaskInstance);
             TaskInstance.init();
             return TaskInstance;
         },
-        update(delay){
+        updatePosition(delay){
             this.Touch.moveY(taskListNode.children,this.TASK_HEIGHT,delay);
+        },
+        updateSort(index,newIndex){
+            let tmp = this.TaskInstances[index];
+            this.TaskInstances.splice(index,1);
+            this.TaskInstances.splice(newIndex,0,tmp);
+            this.Model.changeTaskSort(index,newIndex);
         },
         onTouchStart(e){
             let touch = e.touches[0];
@@ -75,6 +81,7 @@ Clear.TaskList = (function(){
             this.drag = false;
             this.timer = setTimeout(() => {
                 this.drag = true;
+                this.prevDsY = 0;
                 this.touchInstance.ele.classList.add("high-index");
             },1000);
         },
@@ -83,21 +90,30 @@ Clear.TaskList = (function(){
             if(this.disabledTouch){return ;}
             clearTimeout(this.timer);
             let touch = e.touches[0];
+            this.dragDirection = "up";
+            this.moveDirection = "up";
+            if(this.startY < touch.clientY){
+                this.moveDirection = "down";
+            }
+            if(this.moveY < touch.clientY){
+                this.dragDirection = "down";
+            }
             this.moveY = touch.clientY;
             let ds_y = this.moveY - this.startY;
             if(this.drag){
-                console.log("drag index = ",this.index);
                 this.Touch.moveY(this.touchInstance.inner,ds_y);
                 let plus_minus = Math.abs(ds_y)/ds_y;
-                let newIndex = parseInt(ds_y/this.TASK_HEIGHT)+this.index+plus_minus;
-                let judge = Math.abs(ds_y)%this.TASK_HEIGHT - this.TASK_HEIGHT/2;
-                if(judge > 0){
-                    let start = this.index+1,end = newIndex;
+                this.newIndex = parseInt((ds_y/this.TASK_HEIGHT*2+plus_minus)/2)+this.index;
+                let dsY = Math.abs(ds_y)%this.TASK_HEIGHT;
+                console.log("drag index = ",this.index,this.prevDsY,ds_y,dsY,this.TASK_HEIGHT/2);
+                if((this.dragDirection === this.moveDirection && this.prevDsY <= this.TASK_HEIGHT/2 && this.TASK_HEIGHT/2 <= dsY) ||
+                    (this.dragDirection !== this.moveDirection && this.prevDsY >= this.TASK_HEIGHT/2 && this.TASK_HEIGHT/2 >= dsY)){
+                    let start = this.index+1,end = this.newIndex;
                     if(plus_minus === -1){
-                        start = newIndex;
+                        start = this.newIndex;
                         end = this.index-1;
                     }
-                    console.log("drag newIndex = ",newIndex,plus_minus,start,end);
+                    console.log("drag newIndex = ",this.newIndex,plus_minus,start,end);
                     for(let i=0;i<this.TaskInstances.length;i++){
                         if(i>=start && i<=end){
                             this.Touch.moveY(this.TaskInstances[i].inner,-plus_minus*this.TASK_HEIGHT);
@@ -106,6 +122,7 @@ Clear.TaskList = (function(){
                         }
                     }
                 }
+                this.prevDsY = dsY;
                 return;
             }
             this.moveX = touch.clientX;
@@ -131,9 +148,18 @@ Clear.TaskList = (function(){
         },
         onTouchEnd(e){
             if(this.disabledTouch){return ;}
-            clearTimeout(this.timer);    //放置点击事件触发drag
+            clearTimeout(this.timer);    //防止点击事件触发drag
             if(this.drag){
                 this.touchInstance.ele.classList.remove("high-index");
+                if(this.index === this.newIndex){return ;}
+                taskListNode.removeChild(this.touchInstance.ele);
+                taskListNode.insertBefore(this.touchInstance.ele,taskListNode.children[this.newIndex]);
+                this.updateSort(this.index,this.newIndex);
+                this.updatePosition();
+                for(let i=0;i<this.TaskInstances.length;i++){
+                    this.Touch.moveY(this.TaskInstances[i].inner,0);
+                }
+                return ;
             }
             let ds_x = (this.moveX - this.startX)*Clear.Config.SLIDING_VELOCITY;
             let ds_y = (this.moveY - this.startY)*Clear.Config.SLIDING_VELOCITY;
@@ -162,7 +188,7 @@ Clear.TaskList = (function(){
                     setTimeout(() => {
                         //console.log("setTimeout temp : ",temp);
                         taskListNode.removeChild(temp);
-                        this.update(Clear.Config.TASK_CLEAR_DELAY);
+                        this.updatePosition(Clear.Config.TASK_CLEAR_DELAY);
                     },Clear.Config.TASK_CLEAR_DELAY);
                 }
                 this.Touch.moveX(this.touchEle,0);
@@ -187,7 +213,7 @@ Clear.TaskList = (function(){
                     this.touchInstance.del();
                     setTimeout(() => {
                         taskListNode.removeChild(this.touchInstance.ele);
-                        this.update(Clear.Config.TASK_CLEAR_DELAY);
+                        this.updatePosition(Clear.Config.TASK_CLEAR_DELAY);
                     },Clear.Config.TASK_CLEAR_DELAY);
                 }
             }else{
@@ -197,7 +223,7 @@ Clear.TaskList = (function(){
                 let taskInstance = this.createTask(newTask,0);
                 taskListNode.insertBefore(taskInstance.ele,taskListNode.firstElementChild);
                 //console.log("taskListNode.children.length = "+taskListNode.children.length);
-                this.update();
+                this.updatePosition();
                 this.Touch.moveY(content,0);
                 //复原位置
                 if(!value){
@@ -205,7 +231,7 @@ Clear.TaskList = (function(){
                         taskInstance.del();
                         setTimeout(() => {
                             taskListNode.removeChild(taskInstance.ele);
-                            this.update(Clear.Config.TASK_CLEAR_DELAY);
+                            this.updatePosition(Clear.Config.TASK_CLEAR_DELAY);
                         },Clear.Config.TASK_CLEAR_DELAY);
                     });
                     //等插入后立即执行不会有transition的效果，因为浏览器还没有渲染，必须加一个时钟周期的延迟
