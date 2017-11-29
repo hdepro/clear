@@ -6,6 +6,7 @@ let finishClass = "finish";
 Clear.Task = function(task){
     this.task = task;
     this.ele = null;
+    this.inner = null;
 };
 
 Clear.Task.prototype = {
@@ -16,7 +17,8 @@ Clear.Task.prototype = {
         console.log(task);
         ele.innerHTML = `<div class="inner">     
             <li class="task ${task.state?finishClass:''}" data-id="${task.id}">
-                  <input class="task-name" name="task-name" value="${task.name}"/>
+                  <span class="task-name">${task.name}</span>
+                  <input class="task-name hide" name="task-name" value="${task.name}"/>
                   <span class="task-num">${task.items.length}</span>
             </li>
             <div class="info">
@@ -32,7 +34,7 @@ Clear.Task.prototype = {
     finish(){
         console.log("finish task name = ",this.task.name);
         Clear.Model.finishTask(this.task.id);
-        console.log(this.inner.firstChild);
+        //console.log(this.inner.firstChild);
         this.inner.firstChild.classList.add(finishClass);
     },
     create(){
@@ -45,5 +47,14 @@ Clear.Task.prototype = {
         //console.log("del : ",this.ele);
         Clear.Model.delTask(this.task.id);
         Clear.Touch.moveX(this.inner,-10*Clear.rem,Clear.Config.TASK_CLEAR_DELAY);
+    },
+    onDragStart(){
+
+    },
+    onDragMove(){
+
+    },
+    onDrageEnd(){
+
     }
 };

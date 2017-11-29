@@ -151,7 +151,7 @@ Clear.TaskList = (function(){
             clearTimeout(this.timer);    //防止点击事件触发drag
             if(this.drag){
                 this.touchInstance.ele.classList.remove("high-index");
-                if(this.index === this.newIndex){return ;}
+                if(!this.newIndex || this.index === this.newIndex){return ;}
                 taskListNode.removeChild(this.touchInstance.ele);
                 taskListNode.insertBefore(this.touchInstance.ele,taskListNode.children[this.newIndex]);
                 this.updateSort(this.index,this.newIndex);
